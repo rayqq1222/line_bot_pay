@@ -14,8 +14,8 @@ from models.product import Products
 
 app = Flask(__name__)
 
-line_bot_api = LineBotApi('iEhsSiWhMcAFxMAou5WkNgkvK5GX+o32/vIzeuGUe+GE0pxfTeoyMnEcII7Mzja4emzZRpOUzfBmM+1emp+zPnOvEUnTkjGmJump+/GAbMxuyNvYWlIFW9551+R/7uMRDV2G9EifoqY6gXMbpAuNNQdB04t89/1O/w1cDnyilFU=')
-handler = WebhookHandler('f016370da2f1cb7ddd43e5f5b6817ab7')
+line_bot_api = LineBotApi('7x/TZ8vnaAzq6C84fxjghqpASqR5rC/V4qTtoSx3AA6CBqZT+RWj3I16x1PubmCul7y90n9nR0XfFAFHAoU5OgMHM/0vVYXtf6zN74OMKGeI/H7mF39ADle0GVz+RH13MEQWsSPVVIkQErQNo0746QdB04t89/1O/w1cDnyilFU=')
+handler = WebhookHandler('d382d1917db2196be9256ebcb9b258ba')
 
 #建立或取得user
 def get_or_creat_user(user_id):
