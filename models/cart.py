@@ -1,6 +1,6 @@
 from cachelib import SimpleCache
 from linebot.models import *
-from models.database import db_session
+from database import db_session
 from models.product import Products
 
 cache = SimpleCache()
@@ -121,3 +121,4 @@ class Cart(object):
         message = FlexSendMessage(alt_text='Cart', contents=bubble)
 
         return message#會回傳到app.py message = cart.display()
+

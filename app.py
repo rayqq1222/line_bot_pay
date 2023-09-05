@@ -10,26 +10,37 @@ from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,ImageSendMessage,StickerSendMessage,FollowEvent,UnfollowEvent,
 )
 from linebot.models import *
-from models.database import db_session, init_db
+from database import db_session
 from models.user import Users
+
+from models.product import Products
 from sqlalchemy.sql.expression import text
+from database import db_session, init_db
+
 from models.product import Products
 from models.cart import Cart
-
+from models.order import Orders
+from models.item import Items
+from config import Config
 app = Flask(__name__)
 
-line_bot_api = LineBotApi('7x/TZ8vnaAzq6C84fxjghqpASqR5rC/V4qTtoSx3AA6CBqZT+RWj3I16x1PubmCul7y90n9nR0XfFAFHAoU5OgMHM/0vVYXtf6zN74OMKGeI/H7mF39ADle0GVz+RH13MEQWsSPVVIkQErQNo0746QdB04t89/1O/w1cDnyilFU=')
-handler = WebhookHandler('d382d1917db2196be9256ebcb9b258ba')
+
+line_bot_api = LineBotApi(Config.CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(Config.CHANNEL_SECRET)
+
+# 1654645649
+# 89d3d4609dc0feffb7971e8c39c4b221
+app = Flask(__name__)
 
 #建立或取得user
-def get_or_creat_user(user_id):
+def get_or_create_user(user_id):
     #從id=user_id先搜尋有沒有這個user，如果有的話就會直接跳到return
     user = db_session.query(Users).filter_by(id=user_id).first()
     #沒有的話就會透過line_bot_api來取得用戶資訊
     if not user:
         profile = line_bot_api.get_profile(user_id)
-        #然後再建立user並且存入到資料庫中
-        user = Users(id = user_id, nick_name=profile.display_name, image_url=profile.picture_url)
+        #然後再建立user並且存入到資料庫當中
+        user = Users(id=user_id, nick_name=profile.display_name, image_url=profile.picture_url)
         db_session.add(user)
         db_session.commit()
 
@@ -47,6 +58,7 @@ def about_us_event(event):
                 "emojiId": "225"
             }
         ]
+
     text_message = TextSendMessage(text='''$ Master RenderP $
 Hello! 您好，歡迎您成為 Master RenderP 的好友！
 
@@ -64,37 +76,38 @@ Hello! 您好，歡迎您成為 Master RenderP 的好友！
     line_bot_api.reply_message(
         event.reply_token,
         [text_message, sticker_message])
-
+    
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
-    
+
     # get request body as text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
-    
+
+    # handle webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
 
     return 'OK'
+
 # 處理訊息
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     #event有什麼資料？詳見補充
-    get_or_creat_user(event.source.user_id)
-    profile = line_bot_api.get_profile(event.source.user_id)
-    uid = profile.user_id
+    get_or_create_user(event.source.user_id)
+    
     message_text = str(event.message.text).lower()
-    cart = Cart(user_id = event.source.user_id)
-   
+    cart =  Cart(user_id = event.source.user_id)
+    message = None
     ######################## 使用說明 選單 油價查詢################################
-    if message_text == "@使用說明":
+    if message_text == '@使用說明':
         about_us_event(event)
-    elif message_text =='我想訂購商品':
+    elif message_text == '我想訂購商品':
         message = Products.list_all()
     #當user要訂購時就會執行這段程式
     elif "i'd like to have" in message_text:
@@ -129,13 +142,15 @@ def handle_message(event):
             message = cart.display()#就會使用 display()顯示購物車內容
         else:
             message = TextSendMessage(text='Your cart is empty now.')
+    elif message_text == 'empty cart':
+
+        cart.reset()
+
+        message = TextSendMessage(text='Your cart is empty now.')
     if message:
         line_bot_api.reply_message(
         event.reply_token,
-        message)     
-
-    line_bot_api.reply_message(
-        event.reply_token, TextSendMessage(text='Hi! Welcome to LSTORE.'))
+        message) 
 #初始化產品資訊
 @app.before_first_request
 def init_products():
@@ -156,7 +171,28 @@ def init_products():
                               description='Aenean massa. Cum sociis natoque penatibus')]
         db_session.bulk_save_objects(init_data)#透過這個方法一次儲存list中的產品
         db_session.commit()#最後commit()才會存進資料庫
-        #記得要from models.product import Products在app.py        
+        #記得要from models.product import Products在app.py
+        
+        
+            
+            
+
+
+@handler.add(FollowEvent)
+def handle_follow(event):
+    welcome_msg = """Hello! 您好，歡迎您成為 Master Finance 的好友！
+
+我是Master 財經小幫手 
+
+-這裡有股票，匯率資訊喔~
+-直接點選下方【圖中】選單功能
+
+-期待您的光臨！"""
+
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=welcome_msg))
+
 
 if __name__ == "__main__":
     init_products()
