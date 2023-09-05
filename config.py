@@ -8,4 +8,4 @@ class Config:
 
     LINE_PAY_ID = '2000641141'
     LINE_PAY_SECRET = 'd3ad72229457b9479328f9c809b90afb'
-    #STORE_IMAGE_URL = ''
+    STORE_IMAGE_URL = 'https://imgur.com/VsceABB'
